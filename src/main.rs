@@ -11,6 +11,8 @@ use std::path::PathBuf;
 struct Opts {
     /// Input file path
     file: PathBuf,
+     #[clap(short, long, default_value = "30")]
+    linger_minutes:u16,
 }
 
 struct Span {
@@ -26,7 +28,7 @@ fn main() -> std::io::Result<()> {
     let history = String::from_utf8_lossy(&history);
 
     let today = Utc::now().date();
-    let linger: Duration = Duration::minutes(40);
+    let linger: Duration = Duration::minutes(opts.linger_minutes as i64);
     let end_of_day = NaiveTime::from_hms(17, 0, 0);
     let workday = Duration::hours(8);
     {
@@ -56,7 +58,9 @@ fn main() -> std::io::Result<()> {
 
         println!("Breaks (more than {}m):", linger.num_minutes());
         for s in &break_spans {
-            println!("  - {}-{} {}m", s.start.time(), s.end.time(), s.duration.num_minutes());
+            let start = DateTime::<Local>::from(s.start).time();
+            let end = DateTime::<Local>::from(s.end).time();
+            println!("  - {}-{} {}m", start, end, s.duration.num_minutes());
         }
 
         let first_command_today: Option<DateTime<Utc>> =
