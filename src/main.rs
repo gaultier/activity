@@ -13,6 +13,12 @@ struct Opts {
     file: PathBuf,
 }
 
+struct Span {
+    start: DateTime<Utc>,
+    end: DateTime<Utc>,
+    duration: Duration,
+}
+
 fn main() -> std::io::Result<()> {
     let opts: Opts = Opts::parse();
     let re = Regex::new(r#"^: (\d+):"#).unwrap();
@@ -35,33 +41,33 @@ fn main() -> std::io::Result<()> {
             .collect::<Vec<_>>();
         command_date_times.reverse();
 
-        let durations = command_date_times
+        let spans = command_date_times
             .windows(2)
-            .filter(|span| match span {
-                [start, end] => end.signed_duration_since(*start) < linger,
-                _ => false,
+            .filter_map(|span| match span {
+                [start, end] => Some(Span {
+                    start: *start,
+                    end: *end,
+                    duration: end.signed_duration_since(*start),
+                }),
+                _ => None,
             })
+            .filter(|span| span.duration < linger)
             .collect::<Vec<_>>();
 
-        let first_command_today = durations.first().and_then(|span| span.first());
-        let last_command_today = durations.last().and_then(|span| span.last());
+        let first_command_today: Option<DateTime<Utc>> = spans.first().map(|span| span.start);
+        let last_command_today: Option<DateTime<Utc>> = spans.last().map(|span| span.end);
 
-        for d in &durations {
-            println!("{:#?}", d);
+        for s in &spans {
+            println!("{} {} {}", s.start, s.end, s.duration);
         }
-        let total_duration_minutes: i64 = durations
-            .iter()
-            .map(|span| match span {
-                [start, end] => end.signed_duration_since(*start).num_minutes(),
-                _ => 0,
-            })
-            .sum();
+        let total_duration_minutes: i64 =
+            spans.iter().map(|span| span.duration.num_minutes()).sum();
 
         let start = first_command_today
-            .map(|datetime| DateTime::<Local>::from(*datetime).time().to_string())
+            .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
             .unwrap_or("<Unknown>".to_string());
         let end = last_command_today
-            .map(|datetime| DateTime::<Local>::from(*datetime).time().to_string())
+            .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
             .unwrap_or("<Unknown>".to_string());
         println!("Start: {}", start);
         println!("End: {}", end);
