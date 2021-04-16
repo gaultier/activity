@@ -1,4 +1,4 @@
-use chrono::{offset::TimeZone, Datelike, Local, NaiveDateTime, Timelike};
+use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use clap::{AppSettings, Clap};
 use regex::Regex;
 use std::path::PathBuf;
@@ -19,44 +19,37 @@ fn main() -> std::io::Result<()> {
     let history = std::fs::read(&opts.file)?;
     let history = String::from_utf8_lossy(&history);
 
-    let mut last_day_from_ce = 0i32;
-    const BUCKET_SIZE: usize = 15;
-    const BUCKETS: usize = 60 * 24 / BUCKET_SIZE;
-    let mut heatmap_for_day: [u64; BUCKETS] = [0u64; BUCKETS];
-
-    // Headers
-    for (i, _) in heatmap_for_day.iter().enumerate() {
-        print!(",{}", i);
-    }
-    println!();
-
-    // Body
-    for command in history.lines() {
+    let today = Utc::now().date();
+    let mut first_command_today_time: Option<DateTime<Utc>> = None;
+    let mut last_command_today_time: Option<DateTime<Utc>> = None;
+    for command in history.lines().rev() {
         let capture = re.captures_iter(command).next();
         if capture.is_none() {
             continue;
         }
         let captured = &capture.unwrap()[1];
-        let utc_date_time = NaiveDateTime::parse_from_str(captured, "%s");
-        if utc_date_time.is_err() {
+        let command_datetime_naive = NaiveDateTime::parse_from_str(captured, "%s");
+        if command_datetime_naive.is_err() {
             continue;
         }
-        let local_date_time = Local.from_local_datetime(&utc_date_time.unwrap()).unwrap();
-        let minute_of_day = local_date_time.time().hour() * 60 + local_date_time.time().minute();
-        let day_from_ce = local_date_time.date().num_days_from_ce();
+        let command_datetime_utc = DateTime::from_utc(command_datetime_naive.unwrap(), Utc);
 
-        heatmap_for_day[minute_of_day as usize / BUCKET_SIZE] += 1;
-
-        if last_day_from_ce != day_from_ce {
-            print!("{}", local_date_time.date());
-            for count in heatmap_for_day.iter() {
-                print!(",{}", count);
-            }
-            println!();
-
-            last_day_from_ce = day_from_ce;
+        if last_command_today_time.is_none() {
+            last_command_today_time = Some(command_datetime_utc);
         }
-    }
+        if command_datetime_utc.date() < today {
+            let start = first_command_today_time
+                .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
+                .unwrap_or("<Unknown>".to_string());
+            let end = last_command_today_time
+                .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
+                .unwrap_or("<Unknown>".to_string());
+            println!("Start: {}", start);
+            println!("Start: {}", end);
 
+            break;
+        }
+        first_command_today_time = Some(command_datetime_utc);
+    }
     Ok(())
 }
