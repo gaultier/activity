@@ -88,11 +88,11 @@ fn main() -> std::io::Result<()> {
             worked_minutes % 60
         );
 
-        let remaining = workday.checked_sub(&worked_duration).unwrap_or(workday);
+        let remaining_duration = workday.checked_sub(&worked_duration).unwrap_or(workday);
         println!(
             "Remaining: {}h{}m",
-            remaining.num_minutes() / 60,
-            remaining.num_minutes() % 60
+            remaining_duration.num_minutes() / 60,
+            remaining_duration.num_minutes() % 60
         );
     }
     Ok(())
