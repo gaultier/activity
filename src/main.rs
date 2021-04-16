@@ -63,7 +63,7 @@ fn main() -> std::io::Result<()> {
             worked_spans.first().map(|span| span.start);
         let last_command_today: Option<DateTime<Utc>> = worked_spans.last().map(|span| span.end);
 
-        let total_duration: Duration =
+        let worked_duration: Duration =
             worked_spans
                 .iter()
                 .fold(Duration::zero(), |total_duration, span| {
@@ -81,14 +81,14 @@ fn main() -> std::io::Result<()> {
         println!("Start: {}", start);
         println!("End: {}", end);
 
-        let total_duration_minutes = total_duration.num_minutes();
+        let worked_minutes = worked_duration.num_minutes();
         println!(
             "Worked: {}h{}m",
-            total_duration_minutes / 60,
-            total_duration_minutes % 60
+            worked_minutes / 60,
+            worked_minutes % 60
         );
 
-        let remaining = workday.checked_sub(&total_duration).unwrap_or(workday);
+        let remaining = workday.checked_sub(&worked_duration).unwrap_or(workday);
         println!(
             "Remaining: {}h{}m",
             remaining.num_minutes() / 60,
