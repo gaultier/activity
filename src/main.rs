@@ -22,6 +22,7 @@ fn main() -> std::io::Result<()> {
     let today = Utc::now().date();
     let mut first_command_today: Option<DateTime<Utc>> = None;
     let mut last_command_today: Option<DateTime<Utc>> = None;
+    let mut total_duration = Duration::minutes(0);
     for command in history.lines().rev() {
         let capture = re.captures_iter(command).next();
         if capture.is_none() {
@@ -46,7 +47,13 @@ fn main() -> std::io::Result<()> {
                 .unwrap_or("<Unknown>".to_string());
             println!("Start: {}", start);
             println!("End: {}", end);
-            println!("Duration: {}", last_command_today.sub(first_command_today));
+            if last_command_today.is_some() && first_command_today.is_some() {
+                let duration = last_command_today
+                    .unwrap()
+                    .signed_duration_since(first_command_today.unwrap());
+
+                println!("Duration: {}h{}m", duration.num_hours(), duration.num_minutes());
+            }
 
             break;
         }
