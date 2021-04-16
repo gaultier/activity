@@ -11,6 +11,8 @@ struct Opts {
     file: PathBuf,
     #[clap(short, long, default_value = "30")]
     linger_minutes: u16,
+    #[clap(short, long, default_value = "8")]
+    workday_hours: u16,
 }
 
 struct Span {
@@ -28,7 +30,7 @@ fn main() -> std::io::Result<()> {
     let today = Utc::now().date();
     let linger: Duration = Duration::minutes(opts.linger_minutes as i64);
     let end_of_day = NaiveTime::from_hms(17, 0, 0);
-    let workday = Duration::hours(8);
+    let workday = Duration::hours(opts.workday_hours as i64);
     {
         let mut command_date_times = history
             .lines()
