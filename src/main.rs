@@ -28,6 +28,7 @@ fn main() -> std::io::Result<()> {
     let today = Utc::now().date();
     let linger: Duration = Duration::minutes(40);
     let end_of_day = NaiveTime::from_hms(17, 0, 0);
+    let workday = Duration::hours(8);
     {
         let mut command_date_times = history
             .lines()
@@ -41,7 +42,7 @@ fn main() -> std::io::Result<()> {
             .collect::<Vec<_>>();
         command_date_times.reverse();
 
-        let spans = command_date_times
+        let (worked_spans, break_spans): (Vec<Span>, Vec<Span>) = command_date_times
             .windows(2)
             .filter_map(|span| match span {
                 [start, end] => Some(Span {
@@ -51,17 +52,19 @@ fn main() -> std::io::Result<()> {
                 }),
                 _ => None,
             })
-            .filter(|span| span.duration < linger)
-            .collect::<Vec<_>>();
+            .partition(|span| span.duration < linger);
 
-        let first_command_today: Option<DateTime<Utc>> = spans.first().map(|span| span.start);
-        let last_command_today: Option<DateTime<Utc>> = spans.last().map(|span| span.end);
-
-        for s in &spans {
-            println!("{}-{} {}", s.start.time(), s.end.time(), s.duration);
+        println!("Breaks (more than {}m):", linger.num_minutes());
+        for s in &break_spans {
+            println!("  - {}-{} {}m", s.start.time(), s.end.time(), s.duration.num_minutes());
         }
+
+        let first_command_today: Option<DateTime<Utc>> =
+            worked_spans.first().map(|span| span.start);
+        let last_command_today: Option<DateTime<Utc>> = worked_spans.last().map(|span| span.end);
+
         let total_duration: Duration =
-            spans
+            worked_spans
                 .iter()
                 .fold(Duration::zero(), |total_duration, span| {
                     total_duration
@@ -77,11 +80,19 @@ fn main() -> std::io::Result<()> {
             .unwrap_or("<Unknown>".to_string());
         println!("Start: {}", start);
         println!("End: {}", end);
+
         let total_duration_minutes = total_duration.num_minutes();
         println!(
-            "Duration: {}h{}m",
+            "Worked: {}h{}m",
             total_duration_minutes / 60,
             total_duration_minutes % 60
+        );
+
+        let remaining = workday.checked_sub(&total_duration).unwrap_or(workday);
+        println!(
+            "Remaining: {}h{}m",
+            remaining.num_minutes() / 60,
+            remaining.num_minutes() % 60
         );
     }
     Ok(())
