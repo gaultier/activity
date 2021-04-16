@@ -3,16 +3,14 @@ use clap::{AppSettings, Clap};
 use regex::Regex;
 use std::path::PathBuf;
 
-/// This doc string acts as a help message when the user runs '--help'
-/// as do all doc strings on fields
+/// Summarize today's work activity based on the zsh command history.
 #[derive(Clap)]
-#[clap(version = "1.0", author = "Kevin K. <kbknapp@gmail.com>")]
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
     /// Input file path
     file: PathBuf,
-     #[clap(short, long, default_value = "30")]
-    linger_minutes:u16,
+    #[clap(short, long, default_value = "30")]
+    linger_minutes: u16,
 }
 
 struct Span {
@@ -56,7 +54,12 @@ fn main() -> std::io::Result<()> {
             })
             .partition(|span| span.duration < linger);
 
-        println!("Breaks (more than {}m):", linger.num_minutes());
+        print!("Breaks (more than {}m):", linger.num_minutes());
+        if break_spans.is_empty() {
+            println!(" None");
+        } else {
+            println!();
+        }
         for s in &break_spans {
             let start = DateTime::<Local>::from(s.start).time();
             let end = DateTime::<Local>::from(s.end).time();
@@ -86,11 +89,7 @@ fn main() -> std::io::Result<()> {
         println!("End: {}", end);
 
         let worked_minutes = worked_duration.num_minutes();
-        println!(
-            "Worked: {}h{}m",
-            worked_minutes / 60,
-            worked_minutes % 60
-        );
+        println!("Worked: {}h{}m", worked_minutes / 60, worked_minutes % 60);
 
         let remaining_duration = workday.checked_sub(&worked_duration).unwrap_or(workday);
         println!(
