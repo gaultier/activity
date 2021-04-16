@@ -34,6 +34,7 @@ fn main() -> std::io::Result<()> {
             .take_while(|utc_date_time| utc_date_time.date() == today)
             .collect::<Vec<_>>();
         command_date_times.reverse();
+
         let durations = command_date_times
             .windows(2)
             .filter(|span| match span {
@@ -41,6 +42,7 @@ fn main() -> std::io::Result<()> {
                 _ => false,
             })
             .collect::<Vec<_>>();
+
         let first_command_today = durations.first().and_then(|span| span.first());
         let last_command_today = durations.last().and_then(|span| span.last());
 
