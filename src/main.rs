@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, NaiveDateTime, Utc};
+use chrono::{DateTime, Local, NaiveDateTime, Utc, Duration};
 use clap::{AppSettings, Clap};
 use regex::Regex;
 use std::path::PathBuf;
@@ -20,8 +20,8 @@ fn main() -> std::io::Result<()> {
     let history = String::from_utf8_lossy(&history);
 
     let today = Utc::now().date();
-    let mut first_command_today_time: Option<DateTime<Utc>> = None;
-    let mut last_command_today_time: Option<DateTime<Utc>> = None;
+    let mut first_command_today: Option<DateTime<Utc>> = None;
+    let mut last_command_today: Option<DateTime<Utc>> = None;
     for command in history.lines().rev() {
         let capture = re.captures_iter(command).next();
         if capture.is_none() {
@@ -34,22 +34,23 @@ fn main() -> std::io::Result<()> {
         }
         let command_datetime_utc = DateTime::from_utc(command_datetime_naive.unwrap(), Utc);
 
-        if last_command_today_time.is_none() {
-            last_command_today_time = Some(command_datetime_utc);
+        if last_command_today.is_none() {
+            last_command_today = Some(command_datetime_utc);
         }
         if command_datetime_utc.date() < today {
-            let start = first_command_today_time
+            let start = first_command_today
                 .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
                 .unwrap_or("<Unknown>".to_string());
-            let end = last_command_today_time
+            let end = last_command_today
                 .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
                 .unwrap_or("<Unknown>".to_string());
             println!("Start: {}", start);
-            println!("Start: {}", end);
+            println!("End: {}", end);
+            println!("Duration: {}", last_command_today.sub(first_command_today));
 
             break;
         }
-        first_command_today_time = Some(command_datetime_utc);
+        first_command_today = Some(command_datetime_utc);
     }
     Ok(())
 }
