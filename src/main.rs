@@ -54,12 +54,11 @@ fn main() -> std::io::Result<()> {
             })
             .partition(|span| span.duration < linger);
 
-        print!("Breaks (more than {}m):", linger.num_minutes());
-        if break_spans.is_empty() {
-            println!(" None");
-        } else {
-            println!();
-        }
+        println!(
+            "Breaks (more than {}m): {}",
+            linger.num_minutes(),
+            if break_spans.is_empty() { "None" } else { "" }
+        );
         for s in &break_spans {
             let start = DateTime::<Local>::from(s.start).time();
             let end = DateTime::<Local>::from(s.end).time();
