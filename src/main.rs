@@ -1,4 +1,4 @@
-use chrono::{offset::TimeZone, Local, NaiveDateTime};
+use chrono::{offset::TimeZone, Local, NaiveDateTime, Timelike};
 use clap::{AppSettings, Clap};
 use regex::Regex;
 use std::path::PathBuf;
@@ -11,9 +11,6 @@ use std::path::PathBuf;
 struct Opts {
     /// Input file path
     file: PathBuf,
-    /// Bucket size
-    #[clap(short, long, default_value = "3600")]
-    bucket_size: u64,
 }
 
 fn main() -> std::io::Result<()> {
@@ -33,7 +30,13 @@ fn main() -> std::io::Result<()> {
             continue;
         }
         let local_date_time = Local.from_local_datetime(&utc_date_time.unwrap()).unwrap();
-        println!("{}", local_date_time);
+        let minute_of_day = local_date_time.time().hour() * 60 + local_date_time.time().minute();
+        println!(
+            "{} {} {}",
+            local_date_time.to_rfc3339(),
+            local_date_time.date(),
+            minute_of_day
+        );
     }
 
     Ok(())
