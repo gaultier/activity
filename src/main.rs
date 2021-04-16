@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, NaiveDateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Local, NaiveDateTime, Utc};
 use clap::{AppSettings, Clap};
 use regex::Regex;
 use std::path::PathBuf;
@@ -20,6 +20,19 @@ fn main() -> std::io::Result<()> {
     let history = String::from_utf8_lossy(&history);
 
     let today = Utc::now().date();
+    {
+        let command_date_times = history
+            .lines()
+            .rev()
+            .filter_map(|cmd| re.captures_iter(cmd).next())
+            .map(|capture| NaiveDateTime::parse_from_str(&capture[1], "%s"))
+            .filter_map(|res| res.ok())
+            .map(|naive_date_time| DateTime::<Utc>::from_utc(naive_date_time, Utc))
+            .take_while(|utc_date_time| utc_date_time.date() >= today);
+        let first_command_today = command_date_times.min();
+        let last_command_today = command_date_times.max();
+    }
+
     let mut first_command_today: Option<DateTime<Utc>> = None;
     let mut last_command_today: Option<DateTime<Utc>> = None;
     let mut total_duration = Duration::minutes(0);
@@ -52,7 +65,11 @@ fn main() -> std::io::Result<()> {
                     .unwrap()
                     .signed_duration_since(first_command_today.unwrap());
 
-                println!("Duration: {}h{}m", duration.num_hours(), duration.num_minutes());
+                println!(
+                    "Duration: {}h{}m",
+                    duration.num_hours(),
+                    duration.num_minutes()
+                );
             }
 
             break;
