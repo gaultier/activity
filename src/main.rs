@@ -12,7 +12,9 @@ struct Opts {
     #[clap(short, long, default_value = "30")]
     linger_minutes: u16,
     #[clap(short, long, default_value = "8")]
-    workday_hours: u16,
+    workday_hours: u8,
+    #[clap(short='W', long, default_value = "17")]
+    workday_end_hour: u8,
 }
 
 struct Span {
@@ -29,7 +31,7 @@ fn main() -> std::io::Result<()> {
 
     let today = Utc::now().date();
     let linger: Duration = Duration::minutes(opts.linger_minutes as i64);
-    let end_of_day = NaiveTime::from_hms(17, 0, 0);
+    let end_of_day = NaiveTime::from_hms(opts.workday_end_hour as u32, 0, 0);
     let workday = Duration::hours(opts.workday_hours as i64);
     {
         let mut command_date_times = history
