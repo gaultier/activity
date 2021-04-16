@@ -58,10 +58,16 @@ fn main() -> std::io::Result<()> {
         let last_command_today: Option<DateTime<Utc>> = spans.last().map(|span| span.end);
 
         for s in &spans {
-            println!("{} {} {}", s.start, s.end, s.duration);
+            println!("{}-{} {}", s.start.time(), s.end.time(), s.duration);
         }
-        let total_duration_minutes: i64 =
-            spans.iter().map(|span| span.duration.num_minutes()).sum();
+        let total_duration: Duration =
+            spans
+                .iter()
+                .fold(Duration::zero(), |total_duration, span| {
+                    total_duration
+                        .checked_add(&span.duration)
+                        .unwrap_or(total_duration)
+                });
 
         let start = first_command_today
             .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
@@ -71,6 +77,7 @@ fn main() -> std::io::Result<()> {
             .unwrap_or("<Unknown>".to_string());
         println!("Start: {}", start);
         println!("End: {}", end);
+        let total_duration_minutes = total_duration.num_minutes();
         println!(
             "Duration: {}h{}m",
             total_duration_minutes / 60,
