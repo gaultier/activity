@@ -7,7 +7,7 @@ use std::path::PathBuf;
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
-    /// Input file path
+    /// History file
     file: PathBuf,
     #[clap(short, long, default_value = "30")]
     linger_minutes: u16,
