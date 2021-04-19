@@ -13,7 +13,7 @@ struct Opts {
     linger_minutes: u16,
     #[clap(short, long, default_value = "8")]
     workday_hours: u8,
-    #[clap(short='W', long, default_value = "17")]
+    #[clap(short = 'W', long, default_value = "17")]
     workday_end_hour: u8,
 }
 
