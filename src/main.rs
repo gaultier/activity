@@ -83,10 +83,10 @@ fn main() -> std::io::Result<()> {
 
         let start = first_command_today
             .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
-            .unwrap_or("<Unknown>".to_string());
+            .unwrap_or_else(|| "<Unknown>".to_string());
         let end = last_command_today
             .map(|datetime| DateTime::<Local>::from(datetime).time().to_string())
-            .unwrap_or("<Unknown>".to_string());
+            .unwrap_or_else(|| "<Unknown>".to_string());
         println!("Start: {}", start);
         println!("End: {}", end);
 
